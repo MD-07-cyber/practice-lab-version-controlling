@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Sample Signup</title>
+    <style>
+        :root{
+            --bg:#f5f7fb;
+            --card:#fff;
+            --accent:#2563eb;
+            --danger:#dc2626;
+            --ok:#16a34a;
+            --muted:#6b7280;
+            font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+        }
+        body{
+            margin:0;
+            min-height:100vh;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            background:linear-gradient(180deg,#eef2ff 0%,var(--bg) 100%);
+            padding:2rem;
+        }
+        .card{
+            width:100%;
+            max-width:520px;
+            background:var(--card);
+            border-radius:12px;
+            padding:1.5rem;
+            box-shadow:0 8px 30px rgba(2,6,23,0.08);
+            box-sizing:border-box;
+        }
+        h1{margin:0 0 0.5rem;font-size:1.25rem}
+        p.lead{margin:0 0 1rem;color:var(--muted);font-size:0.95rem}
+        form{display:grid;gap:0.75rem}
+        label{font-size:0.85rem;color:#111827}
+        input[type="text"], input[type="email"], input[type="password"]{
+            width:100%;
+            padding:0.6rem 0.75rem;
+            border:1px solid #e5e7eb;
+            border-radius:8px;
+            box-sizing:border-box;
+            font-size:0.95rem;
+            outline:none;
+            transition:box-shadow .12s, border-color .12s;
+        }
+        input:focus{box-shadow:0 0 0 4px rgba(37,99,235,0.06);border-color:var(--accent)}
+        .row{display:grid;grid-template-columns:1fr 1fr;gap:0.75rem}
+        .muted{font-size:0.8rem;color:var(--muted);}
+        .actions{display:flex;align-items:center;gap:0.5rem;margin-top:0.25rem}
+        button[type="submit"]{
+            background:var(--accent);
+            color:white;border:0;padding:0.6rem 0.9rem;border-radius:8px;
+            cursor:pointer;font-weight:600;
+        }
+        button[disabled]{opacity:0.6;cursor:not-allowed}
+        .helper{font-size:0.8rem;color:var(--muted)}
+        .hint{font-size:0.8rem;color:var(--danger);display:none}
+        .hint.show{display:block}
+        .meter{height:8px;border-radius:6px;background:#e6eefc;overflow:hidden}
+        .meter > i{display:block;height:100%;width:0;background:linear-gradient(90deg,#f97316,#16a34a);transition:width .2s}
+        .result{padding:0.75rem;border-radius:8px;background:#f8fafc;border:1px solid #e6eefc;color:var(--muted);display:none}
+        .result.show{display:block}
+        .note{font-size:0.82rem;color:var(--muted);margin-top:0.5rem}
+        .tiny{font-size:0.78rem;color:var(--muted)}
+    </style>
+</head>
+<body>
+    <main class="card" role="main">
+        <h1>Create an account</h1>
+        <p class="lead">Quick signup form with client-side validation and password strength feedback.</p>
+
+        <form id="signup" novalidate>
+            <div>
+                <label for="fullname">Full name</label>
+                <input id="fullname" name="fullname" type="text" autocomplete="name" required minlength="2" />
+                <div class="tiny muted">Enter your first and last name.</div>
+            </div>
+
+            <div>
+                <label for="email">Email address</label>
+                <input id="email" name="email" type="email" autocomplete="email" required />
+                <div id="emailHint" class="hint" aria-live="polite"></div>
+            </div>
+
+            <div class="row">
+                <div>
+                    <label for="username">Username</label>
+                    <input id="username" name="username" type="text" pattern="^[a-zA-Z0-9_-]{3,20}$" autocomplete="username" required />
+                    <div class="helper">3–20 chars: letters, numbers, - or _</div>
+                </div>
+
+                <div>
+                    <label for="display">Display name (optional)</label>
+                    <input id="display" name="display" type="text" autocomplete="nickname" />
+                </div>
+            </div>
+
+            <div>
+                <label for="password">Password</label>
+                <input id="password" name="password" type="password" autocomplete="new-password" required minlength="8" />
+                <div class="actions">
+                    <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.9rem">
+                        <input id="showPwd" type="checkbox" aria-label="Show password" />
+                        Show
+                    </label>
+                    <div style="flex:1"></div>
+                    <div class="muted tiny">min 8 characters</div>
+                </div>
+
+                <div style="margin-top:0.5rem">
+                    <div class="meter" aria-hidden="true"><i id="pwdMeter"></i></div>
+                    <div id="pwdText" class="tiny muted" style="margin-top:0.35rem">Password strength: <strong id="pwdStr">—</strong></div>
+                </div>
+                <div id="pwdHint" class="hint" aria-live="polite"></div>
+            </div>
+
+            <div>
+                <label for="confirm">Confirm password</label>
+                <input id="confirm" name="confirm" type="password" autocomplete="new-password" required />
+                <div id="confirmHint" class="hint" aria-live="polite"></div>
+            </div>
+
+            <div>
+                <label>
+                    <input id="tos" name="tos" type="checkbox" required />
+                    I agree to the Terms of Service
+                </label>
+            </div>
+
+            <div style="display:flex;gap:0.75rem;align-items:center">
+                <button id="submit" type="submit">Sign up</button>
+                <div id="busy" class="tiny muted" style="display:none">Processing…</div>
+            </div>
+
+            <div id="result" class="result" role="status" aria-live="polite"></div>
+            <p class="note">This is a sample client-side-only signup. Replace the submit handler with real API calls on the server.</p>
+        </form>
+    </main>
+
+    <script>
+        // Basic client-side validation + password strength meter
+        const form = document.getElementById('signup');
+        const email = document.getElementById('email');
+        const username = document.getElementById('username');
+        const pwd = document.getElementById('password');
+        const confirm = document.getElementById('confirm');
+        const showPwd = document.getElementById('showPwd');
+        const pwdMeter = document.getElementById('pwdMeter');
+        const pwdStr = document.getElementById('pwdStr');
+        const pwdHint = document.getElementById('pwdHint');
+        const confirmHint = document.getElementById('confirmHint');
+        const emailHint = document.getElementById('emailHint');
+        const result = document.getElementById('result');
+        const busy = document.getElementById('busy');
+        const submit = document.getElementById('submit');
+
+        // Simple password strength: score 0..4
+        function passwordScore(value){
+            let score = 0;
+            if (!value) return 0;
+            if (value.length >= 8) score++;
+            if (/[A-Z]/.test(value)) score++;
+            if (/[0-9]/.test(value)) score++;
+            if (/[^A-Za-z0-9]/.test(value)) score++;
+            return score;
+        }
+
+        function updatePasswordUI(){
+            const v = pwd.value;
+            const score = passwordScore(v);
+            const percent = (score / 4) * 100;
+            pwdMeter.style.width = percent + '%';
+            pwdMeter.parentElement.querySelector('i').style.width = percent + '%';
+
+            let label = 'Very weak';
+            let color = 'linear-gradient(90deg,#f97316,#f97316)';
+            if (score >= 4){ label = 'Strong'; color = 'linear-gradient(90deg,#16a34a,#16a34a)'; }
+            else if (score === 3){ label = 'Good'; color = 'linear-gradient(90deg,#f59e0b,#16a34a)'; }
+            else if (score === 2){ label = 'Weak'; color = 'linear-gradient(90deg,#fb923c,#f97316)'; }
+
+            pwdMeter.style.background = color;
+            pwdMeter.parentElement.querySelector('i').style.background = color;
+            pwdStr.textContent = label;
+
+            if (v.length > 0 && score < 2){
+                pwdHint.textContent = 'Try adding uppercase letters, numbers or symbols to strengthen your password.';
+                pwdHint.classList.add('show');
+            } else {
+                pwdHint.classList.remove('show');
+            }
+
+            // validate confirm when password changes
+            validateConfirm();
+        }
+
+        function validateConfirm(){
+            if (!confirm.value) {
+                confirmHint.classList.remove('show');
+                return true;
+            }
+            if (pwd.value !== confirm.value){
+                confirmHint.textContent = 'Passwords do not match.';
+                confirmHint.classList.add('show');
+                confirm.setCustomValidity('Passwords do not match');
+                return false;
+            } else {
+                confirmHint.classList.remove('show');
+                confirm.setCustomValidity('');
+                return true;
+            }
+        }
+
+        // Simulated username availability check (client-side only)
+        function checkUsernameAvailability(name){
+            // Simulate reserved names
+            const reserved = ['admin','root','support','test'];
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    resolve(!reserved.includes(name.toLowerCase()));
+                }, 400);
+            });
+        }
+
+        let usernameTimer = null;
+        username.addEventListener('input', () => {
+            const name = username.value.trim();
+            clearTimeout(usernameTimer);
+            if (name.length < 3) {
+                username.setCustomValidity('Username too short');
+                return;
+            }
+            username.setCustomValidity('');
+            usernameTimer = setTimeout(async () => {
+                const ok = await checkUsernameAvailability(name);
+                if (!ok){
+                    username.setCustomValidity('Username is taken');
+                    username.reportValidity();
+                } else {
+                    username.setCustomValidity('');
+                }
+            }, 500);
+        });
+
+        email.addEventListener('input', () => {
+            emailHint.classList.remove('show');
+            if (email.validity.typeMismatch){
+                emailHint.textContent = 'Please enter a valid email address.';
+                emailHint.classList.add('show');
+            }
+        });
+
+        pwd.addEventListener('input', updatePasswordUI);
+        confirm.addEventListener('input', validateConfirm);
+        showPwd.addEventListener('change', () => {
+            const t = showPwd.checked ? 'text' : 'password';
+            pwd.type = t;
+            confirm.type = t;
+        });
+
+        form.addEventListener('submit', async (ev) => {
+            ev.preventDefault();
+            result.classList.remove('show');
+            // basic HTML5 validity
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            if (!validateConfirm()) return;
+
+            // Simulate network activity
+            submit.disabled = true;
+            busy.style.display = 'block';
+            await new Promise(r => setTimeout(r, 900));
+
+            // For demo, just show sanitized summary
+            const data = {
+                fullname: document.getElementById('fullname').value.trim(),
+                display: document.getElementById('display').value.trim(),
+                username: username.value.trim(),
+                email: email.value.trim()
+            };
+
+            busy.style.display = 'none';
+            submit.disabled = false;
+
+            result.innerHTML = '<strong>Account created</strong><div style="margin-top:0.4rem" class="tiny">Welcome, '
+                + escapeHtml(data.display || data.fullname || data.username)
+                + ' — a confirmation email would be sent to ' + escapeHtml(data.email) + ' (demo).</div>';
+            result.classList.add('show');
+
+            // reset password fields
+            pwd.value = '';
+            confirm.value = '';
+            updatePasswordUI();
+            form.reset();
+        });
+
+        // Minimal HTML escaping for demo output
+        function escapeHtml(s){
+            return String(s).replace(/[&<>"'`=\/]/g, function (ch) {
+                return ({
+                    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;','/':'&#47;','=':'&#61;'
+                })[ch];
+            });
+        }
+
+        // initialize meter
+        updatePasswordUI();
+    </script>
+</body>
+</html></div>
